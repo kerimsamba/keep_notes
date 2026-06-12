@@ -11,7 +11,7 @@ const SYNC_DEBOUNCE_MS = 2000;
 const TOMBSTONE_RETENTION_DAYS = 30;
 const TRASH_RETENTION_DAYS = 7;
 
-interface NotesData {
+export interface NotesData {
   version: 1;
   savedAt: string;
   notes: Note[];
@@ -48,8 +48,9 @@ function parseData(text: string): NotesData {
 /**
  * Merge two versions of the data set. Per-item last-write-wins by updatedAt,
  * with tombstones so permanent deletions win over stale copies from other devices.
+ * Exported for tests.
  */
-function merge(a: NotesData, b: NotesData): NotesData {
+export function merge(a: NotesData, b: NotesData): NotesData {
   const tombstones: Record<string, string> = { ...a.tombstones };
   for (const [id, at] of Object.entries(b.tombstones)) {
     if (!tombstones[id] || tombstones[id] < at) tombstones[id] = at;
