@@ -1,7 +1,7 @@
 {
-  "name": "KeepClone - Your Notes, Organized",
-  "short_name": "KeepClone",
-  "description": "A Google Keep clone with Firebase backend - organize your notes, todos, and ideas",
+  "name": "Keep Notes - Your Notes, Organized",
+  "short_name": "Keep Notes",
+  "description": "A Google Keep style notes app that stores your notes in a GitHub repo you own",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -9,6 +9,7 @@ import {
   Palette,
   Square,
   CheckSquare,
+  Undo2,
 } from 'lucide-react';
 import { noteService } from '@/lib/services/noteService';
 import { format } from 'date-fns';
@@ -41,6 +42,18 @@ export default function NoteCard({ note, onClick, labels }: NoteCardProps) {
   const handleTrash = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await noteService.moveToTrash(note.id);
+  };
+
+  const handleRestore = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await noteService.restoreFromTrash(note.id);
+  };
+
+  const handleDeleteForever = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Delete this note forever?')) {
+      await noteService.permanentlyDelete(note.id);
+    }
   };
 
   const handleColorChange = async (e: React.MouseEvent, color: keyof typeof NOTE_COLORS) => {
@@ -110,6 +123,25 @@ export default function NoteCard({ note, onClick, labels }: NoteCardProps) {
         </div>
       )}
 
+      {note.isDeleted ? (
+        <div className="flex items-center justify-between mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={handleRestore}
+            className="p-1.5 rounded-full hover:bg-gray-200 transition flex items-center gap-1 text-sm text-gray-700"
+            title="Restore"
+          >
+            <Undo2 className="w-4 h-4" />
+            Restore
+          </button>
+          <button
+            onClick={handleDeleteForever}
+            className="p-1.5 rounded-full hover:bg-red-100 text-red-600 transition"
+            title="Delete forever"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
       <div className="flex items-center justify-between mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="flex items-center gap-1">
           <button
@@ -168,9 +200,10 @@ export default function NoteCard({ note, onClick, labels }: NoteCardProps) {
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
+      )}
 
       <div className="text-xs text-gray-500 mt-2">
-        {format(note.updatedAt.toDate(), 'MMM d, yyyy')}
+        {format(new Date(note.updatedAt), 'MMM d, yyyy')}
       </div>
     </div>
   );
