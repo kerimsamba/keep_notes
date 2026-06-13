@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { StorageProvider } from "@/contexts/StorageContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -22,13 +22,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "KeepClone - Your Notes, Organized",
-  description: "A Google Keep clone with Firebase backend - organize your notes, todos, and ideas",
+  title: "Keep Notes - Your Notes, Organized",
+  description:
+    "A Google Keep style notes app that stores your notes in a GitHub repo you own - organize your notes, todos, and ideas",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "KeepClone",
+    title: "Keep Notes",
   },
 };
 
@@ -47,9 +48,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
+        <StorageProvider>
           {children}
-        </AuthProvider>
+        </StorageProvider>
       </body>
     </html>
   );

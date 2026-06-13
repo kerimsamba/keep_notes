@@ -7,12 +7,13 @@ import {
   Archive,
   Trash2,
   Tag,
-  LogOut,
-  User,
+  Unplug,
+  Github,
+  RefreshCw,
   Grid3x3,
   List,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useStorage } from '@/contexts/StorageContext';
 
 interface SidebarProps {
   currentView: 'notes' | 'reminders' | 'archive' | 'trash';
@@ -31,7 +32,26 @@ export default function Sidebar({
   labels,
   onLabelClick,
 }: SidebarProps) {
-  const { user, logout } = useAuth();
+  const { config, syncStatus, syncNow, disconnect } = useStorage();
+
+  const statusLabel =
+    syncStatus === 'syncing'
+      ? 'Syncing...'
+      : syncStatus === 'offline'
+        ? 'Offline'
+        : syncStatus === 'error'
+          ? 'Sync error'
+          : 'Synced';
+
+  const handleDisconnect = () => {
+    if (
+      confirm(
+        'Disconnect from GitHub? Your notes stay in your repo and in this browser; you can reconnect anytime.'
+      )
+    ) {
+      disconnect();
+    }
+  };
 
   const menuItems = [
     { id: 'notes', icon: Lightbulb, label: 'Notes' },
@@ -111,21 +131,28 @@ export default function Sidebar({
         </div>
 
         <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
-          <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white font-semibold">
-            {user?.displayName?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
+          <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white flex-shrink-0">
+            <Github className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.displayName || 'User'}
+            <p className="text-sm font-medium text-gray-900 truncate" title={config?.repo}>
+              {config?.repo || 'Not connected'}
             </p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <p className="text-xs text-gray-500 truncate">{statusLabel}</p>
           </div>
           <button
-            onClick={logout}
-            className="p-2 text-gray-600 hover:text-red-600 transition"
-            title="Logout"
+            onClick={syncNow}
+            className="p-2 text-gray-600 hover:text-gray-900 transition"
+            title="Sync now"
           >
-            <LogOut className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={handleDisconnect}
+            className="p-2 text-gray-600 hover:text-red-600 transition"
+            title="Disconnect from GitHub"
+          >
+            <Unplug className="w-4 h-4" />
           </button>
         </div>
       </div>

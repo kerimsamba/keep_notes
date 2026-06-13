@@ -11,7 +11,6 @@ interface Label {
 }
 
 interface LabelManagerProps {
-  userId: string;
   labels: Label[];
   onClose: () => void;
 }
@@ -35,7 +34,7 @@ const LABEL_COLORS = [
   '#ec4899', // pink
 ];
 
-export default function LabelManager({ userId, labels, onClose }: LabelManagerProps) {
+export default function LabelManager({ labels, onClose }: LabelManagerProps) {
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState(LABEL_COLORS[0]);
   const [editingLabel, setEditingLabel] = useState<Label | null>(null);
@@ -45,7 +44,7 @@ export default function LabelManager({ userId, labels, onClose }: LabelManagerPr
     if (!newLabelName.trim()) return;
 
     try {
-      await labelService.createLabel(userId, newLabelName.trim(), newLabelColor);
+      labelService.createLabel(newLabelName.trim(), newLabelColor);
       setNewLabelName('');
       setNewLabelColor(LABEL_COLORS[0]);
     } catch (error) {
@@ -73,7 +72,7 @@ export default function LabelManager({ userId, labels, onClose }: LabelManagerPr
     }
 
     try {
-      await labelService.deleteLabel(labelId, userId);
+      labelService.deleteLabel(labelId);
     } catch (error) {
       console.error('Error deleting label:', error);
     }

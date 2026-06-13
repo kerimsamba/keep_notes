@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { useAuth } from '@/contexts/AuthContext';
-import AuthPage from '@/components/auth/AuthPage';
+import { useStorage } from '@/contexts/StorageContext';
+import SetupPage from '@/components/auth/SetupPage';
 import Sidebar from '@/components/layout/Sidebar';
 import SearchBar from '@/components/layout/SearchBar';
 import NotesGrid from '@/components/notes/NotesGrid';
@@ -20,12 +20,12 @@ const InstallPWA = dynamic(() => import('@/components/InstallPWA'), {
   ssr: false,
 });
 
-const OnlineStatus = dynamic(() => import('@/components/OnlineStatus'), {
+const SyncStatus = dynamic(() => import('@/components/SyncStatus'), {
   ssr: false,
 });
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { config, loading } = useStorage();
   const [notes, setNotes] = useState<Note[]>([]);
   const [labels, setLabels] = useState<Label[]>([]);
   const [currentView, setCurrentView] = useState<'notes' | 'reminders' | 'archive' | 'trash'>(
@@ -38,45 +38,24 @@ export default function Home() {
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [selectedLabelFilter, setSelectedLabelFilter] = useState<string | null>(null);
 
-  // Subscribe to notes
+  // Subscribe to notes and labels
   useEffect(() => {
-    if (!user) return;
-
-    const filters: Record<string, boolean> = {
-      isArchived: currentView === 'archive',
-      isDeleted: currentView === 'trash',
+    if (!config) return;
+    const unsubscribeNotes = noteService.subscribeToNotes(setNotes);
+    const unsubscribeLabels = labelService.subscribeToLabels(setLabels);
+    return () => {
+      unsubscribeNotes();
+      unsubscribeLabels();
     };
-
-    if (currentView === 'notes') {
-      filters.isArchived = false;
-      filters.isDeleted = false;
-    }
-
-    const unsubscribe = noteService.subscribeToNotes(user.uid, setNotes, filters);
-    return () => unsubscribe();
-  }, [user, currentView]);
-
-  // Subscribe to labels
-  useEffect(() => {
-    if (!user) return;
-
-    const unsubscribe = labelService.subscribeToLabels(user.uid, setLabels);
-    return () => unsubscribe();
-  }, [user]);
+  }, [config]);
 
   // Auto-cleanup trash (7 days)
   useEffect(() => {
-    if (!user) return;
-
-    const cleanup = async () => {
-      await noteService.cleanupTrash(user.uid);
-    };
-
-    cleanup();
-    const interval = setInterval(cleanup, 24 * 60 * 60 * 1000); // Daily
-
+    if (!config) return;
+    noteService.cleanupTrash();
+    const interval = setInterval(() => noteService.cleanupTrash(), 24 * 60 * 60 * 1000); // Daily
     return () => clearInterval(interval);
-  }, [user]);
+  }, [config]);
 
   if (loading) {
     return (
@@ -89,12 +68,19 @@ export default function Home() {
     );
   }
 
-  if (!user) {
-    return <AuthPage />;
+  if (!config) {
+    return <SetupPage />;
   }
 
-  // Filter notes based on search query and label filter
+  // Filter notes for the current view, search query, and label filter
   const filteredNotes = notes.filter((note) => {
+    const matchesView =
+      currentView === 'trash'
+        ? note.isDeleted
+        : currentView === 'archive'
+          ? note.isArchived && !note.isDeleted
+          : !note.isArchived && !note.isDeleted;
+
     const matchesSearch =
       !searchQuery ||
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -102,7 +88,7 @@ export default function Home() {
 
     const matchesLabel = !selectedLabelFilter || note.labels.includes(selectedLabelFilter);
 
-    return matchesSearch && matchesLabel;
+    return matchesView && matchesSearch && matchesLabel;
   });
 
   const handleCreateNote = () => {
@@ -115,7 +101,7 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <OnlineStatus />
+      <SyncStatus />
 
       <Sidebar
         currentView={currentView}
@@ -197,7 +183,6 @@ export default function Home() {
       {(selectedNote || isCreatingNote) && (
         <NoteEditor
           note={selectedNote || undefined}
-          userId={user.uid}
           onClose={() => {
             setSelectedNote(null);
             setIsCreatingNote(false);
@@ -207,11 +192,7 @@ export default function Home() {
       )}
 
       {showLabelManager && (
-        <LabelManager
-          userId={user.uid}
-          labels={labels}
-          onClose={() => setShowLabelManager(false)}
-        />
+        <LabelManager labels={labels} onClose={() => setShowLabelManager(false)} />
       )}
 
       <InstallPWA />

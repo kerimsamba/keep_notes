@@ -7,12 +7,11 @@ import { noteService } from '@/lib/services/noteService';
 
 interface NoteEditorProps {
   note?: Note;
-  userId: string;
   onClose: () => void;
   labels: Array<{ id: string; name: string; color: string }>;
 }
 
-export default function NoteEditor({ note, userId, onClose, labels }: NoteEditorProps) {
+export default function NoteEditor({ note, onClose, labels }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title || '');
   const [content, setContent] = useState(note?.content || '');
   const [noteType, setNoteType] = useState<NoteType>(note?.type || 'text');
@@ -27,7 +26,7 @@ export default function NoteEditor({ note, userId, onClose, labels }: NoteEditor
 
   const colorClasses = NOTE_COLORS[color];
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!title.trim() && !content.trim() && checklistItems.length === 0) {
       onClose();
       return;
@@ -35,7 +34,7 @@ export default function NoteEditor({ note, userId, onClose, labels }: NoteEditor
 
     try {
       if (note) {
-        await noteService.updateNote(note.id, {
+        noteService.updateNote(note.id, {
           title,
           content,
           type: noteType,
@@ -45,18 +44,15 @@ export default function NoteEditor({ note, userId, onClose, labels }: NoteEditor
           labels: selectedLabels,
         });
       } else {
-        const noteId = await noteService.createNote(userId, title, content, noteType, color);
-        if (isPinned) {
-          await noteService.togglePin(noteId, true);
-        }
-        if (selectedLabels.length > 0) {
-          for (const labelId of selectedLabels) {
-            await noteService.addLabel(noteId, labelId);
-          }
-        }
-        if (noteType === 'checklist' && checklistItems.length > 0) {
-          await noteService.updateChecklistItems(noteId, checklistItems);
-        }
+        noteService.createNote({
+          title,
+          content,
+          type: noteType,
+          color,
+          isPinned,
+          labels: selectedLabels,
+          checklistItems: noteType === 'checklist' ? checklistItems : undefined,
+        });
       }
       onClose();
     } catch (error) {

@@ -19,6 +19,12 @@ const pwaConfig = withPWA({
   reloadOnOnline: true,
   runtimeCaching: [
     {
+      // Never serve stale GitHub API responses — sync correctness depends on fresh shas
+      urlPattern: /^https:\/\/api\.github\.com\/.*/i,
+      handler: 'NetworkOnly',
+      options: {},
+    },
+    {
       urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
       handler: 'CacheFirst',
       options: {

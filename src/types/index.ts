@@ -1,5 +1,3 @@
-import { Timestamp } from 'firebase/firestore';
-
 export type NoteType = 'text' | 'checklist' | 'image' | 'audio' | 'drawing';
 
 export type NoteColor =
@@ -33,16 +31,8 @@ export interface Attachment {
   metadata?: Record<string, unknown>;
 }
 
-export interface SharedUser {
-  userId: string;
-  email: string;
-  permission: 'view' | 'edit';
-  sharedAt: Timestamp;
-}
-
 export interface Note {
   id: string;
-  userId: string;
   title: string;
   content: string;
   type: NoteType;
@@ -53,33 +43,17 @@ export interface Note {
   isDeleted: boolean;
   checklistItems?: ChecklistItem[];
   attachments?: Attachment[];
-  sharedWith?: SharedUser[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  deletedAt?: Timestamp;
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
+  deletedAt?: string | null; // ISO 8601
 }
 
 export interface Label {
   id: string;
   name: string;
   color: string;
-  userId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
-  defaultView: 'grid' | 'list';
-  autoSync: boolean;
-}
-
-export interface User {
-  uid: string;
-  email: string;
-  displayName: string;
-  photoURL: string;
-  preferences: UserPreferences;
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
 }
 
 export const NOTE_COLORS: Record<NoteColor, { bg: string; hover: string; border: string }> = {
